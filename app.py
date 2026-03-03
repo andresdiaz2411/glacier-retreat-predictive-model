@@ -116,40 +116,71 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------------------------------
-# RESIDUAL ANALYSIS (AGREGADO)
+# RESIDUAL ANALYSIS (ANIMATED)
 # ---------------------------------------------------
-st.markdown("## 🔬 Residual Diagnostics")
+st.markdown("## 🎞️ Animated Residual Diagnostics")
 
 residuals = areas - predicted
 
-residual_fig = go.Figure()
+# Crear dataframe para animación
+residual_df = pd.DataFrame({
+    "Year": years,
+    "Residual": residuals
+})
 
-residual_fig.add_trace(go.Scatter(
-    x=years,
-    y=residuals,
-    mode='markers',
-    name='Residuals'
-))
+# Crear figura animada
+animated_fig = go.Figure()
 
-residual_fig.add_hline(y=0, line_dash="dash")
+for i in range(len(residual_df)):
+    animated_fig.add_trace(go.Scatter(
+        x=residual_df["Year"][:i+1],
+        y=residual_df["Residual"][:i+1],
+        mode='lines+markers',
+        name="Residual Evolution",
+        visible=(i == len(residual_df)-1)
+    ))
 
-residual_fig.update_layout(
+# Crear frames para animación
+frames = []
+for i in range(len(residual_df)):
+    frame = go.Frame(
+        data=[go.Scatter(
+            x=residual_df["Year"][:i+1],
+            y=residual_df["Residual"][:i+1],
+            mode='lines+markers'
+        )],
+        name=str(residual_df["Year"][i])
+    )
+    frames.append(frame)
+
+animated_fig.frames = frames
+
+animated_fig.update_layout(
     template="plotly_dark",
     xaxis_title="Year",
     yaxis_title="Residual (Observed - Predicted)",
-    height=500
+    height=500,
+    updatemenus=[{
+        "type": "buttons",
+        "buttons": [{
+            "label": "▶ Play",
+            "method": "animate",
+            "args": [None]
+        }]
+    }]
 )
 
-st.plotly_chart(residual_fig, use_container_width=True)
+animated_fig.add_hline(y=0, line_dash="dash")
+
+st.plotly_chart(animated_fig, use_container_width=True)
 
 st.markdown("""
-**Interpretation:**
+**How to interpret this animation:**
 
-- Residuals randomly distributed around zero suggest adequate model fit.
-- Systematic patterns may indicate underfitting or model misspecification.
-- Increasing dispersion over time may indicate non-stationarity.
+- Watch how residual magnitude changes over time.
+- Increasing dispersion may indicate growing model uncertainty.
+- Consistent bias above or below zero indicates systematic error.
 """)
-
 # ---------------------------------------------------
 # MAP SECTION
 # ---------------------------------------------------
@@ -175,3 +206,4 @@ st.plotly_chart(map_fig, use_container_width=True)
 
 st.markdown("---")
 st.markdown("Developed by Andres Diaz | GIS & Spatial Data Analyst")
+
