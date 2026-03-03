@@ -1,134 +1,155 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from sklearn.metrics import r2_score, mean_squared_error
 
 # ---------------------------------------------------
-# Configuración
+# CONFIGURACIÓN
 # ---------------------------------------------------
-st.set_page_config(page_title="Glacier Modeling Dashboard", layout="wide")
+st.set_page_config(
+    page_title="Glacier Climate Modeling Dashboard",
+    layout="wide",
+    page_icon="🌍"
+)
 
-st.title("Advanced Glacier Retreat Modeling Dashboard")
-st.markdown("Comparative Statistical Analysis: Linear vs Polynomial Regression")
+st.title("🌍 Glacier Retreat Climate Modeling Dashboard")
+st.markdown("Advanced Comparative Statistical Analysis")
 
 # ---------------------------------------------------
-# Cargar datos
+# LOAD DATA
 # ---------------------------------------------------
 df = pd.read_csv("data/glacier_area.csv")
-
 years = df["year"].values
 areas = df["area_km2"].values
 
 # Sidebar
-st.sidebar.header("Model Settings")
+st.sidebar.header("⚙️ Model Configuration")
 degree = st.sidebar.slider("Polynomial Degree", 2, 6, 4)
 projection_year = st.sidebar.slider("Projection Year", 2025, 2050, 2035)
 
 # ---------------------------------------------------
-# MODELO LINEAL
+# MODELS
 # ---------------------------------------------------
-linear_coeffs = np.polyfit(years, areas, 1)
-linear_model = np.poly1d(linear_coeffs)
+linear_model = np.poly1d(np.polyfit(years, areas, 1))
+poly_model = np.poly1d(np.polyfit(years, areas, degree))
+
 linear_pred = linear_model(years)
-
-r2_linear = r2_score(areas, linear_pred)
-mse_linear = mean_squared_error(areas, linear_pred)
-rmse_linear = np.sqrt(mse_linear)
-
-# ---------------------------------------------------
-# MODELO POLINÓMICO
-# ---------------------------------------------------
-poly_coeffs = np.polyfit(years, areas, degree)
-poly_model = np.poly1d(poly_coeffs)
 poly_pred = poly_model(years)
 
+r2_linear = r2_score(areas, linear_pred)
 r2_poly = r2_score(areas, poly_pred)
-mse_poly = mean_squared_error(areas, poly_pred)
-rmse_poly = np.sqrt(mse_poly)
 
-# Proyección futura
+rmse_linear = np.sqrt(mean_squared_error(areas, linear_pred))
+rmse_poly = np.sqrt(mean_squared_error(areas, poly_pred))
+
 future_years = np.arange(min(years), projection_year + 1)
-linear_future = linear_model(future_years)
-poly_future = poly_model(future_years)
 
 # ---------------------------------------------------
-# LAYOUT PRINCIPAL
+# METRICS SECTION
 # ---------------------------------------------------
-col1, col2 = st.columns(2)
+st.markdown("## 📊 Model Performance Overview")
 
-with col1:
-    st.subheader("Model Comparison")
+col1, col2, col3, col4 = st.columns(4)
 
-    fig, ax = plt.subplots(figsize=(8,5))
-    ax.scatter(years, areas, label="Observed Data")
-    ax.plot(future_years, linear_future, label="Linear Model")
-    ax.plot(future_years, poly_future, label=f"Polynomial (deg {degree})")
-    ax.axvline(x=max(years), linestyle="--")
-    ax.set_xlabel("Year")
-    ax.set_ylabel("Area (km²)")
-    ax.legend()
+col1.metric("Linear R²", f"{r2_linear:.4f}")
+col2.metric("Polynomial R²", f"{r2_poly:.4f}")
+col3.metric("Linear RMSE", f"{rmse_linear:.4f}")
+col4.metric("Polynomial RMSE", f"{rmse_poly:.4f}")
 
-    st.pyplot(fig)
-
-with col2:
-    st.subheader("Statistical Performance")
-
-    st.markdown("### Linear Model")
-    st.metric("R²", f"{r2_linear:.4f}")
-    st.metric("RMSE", f"{rmse_linear:.4f}")
-    st.metric("MSE", f"{mse_linear:.4f}")
-
-    st.markdown("---")
-
-    st.markdown("### Polynomial Model")
-    st.metric("R²", f"{r2_poly:.4f}")
-    st.metric("RMSE", f"{rmse_poly:.4f}")
-    st.metric("MSE", f"{mse_poly:.4f}")
-
-    st.markdown("---")
-
-    if r2_poly > r2_linear:
-        st.success("Polynomial model provides better fit (higher R²).")
-    else:
-        st.info("Linear model provides comparable or better fit.")
-
-    if degree >= 5:
-        st.warning("High polynomial degrees may cause overfitting.")
+if r2_poly > r2_linear:
+    st.success("Polynomial model provides superior explanatory power.")
+else:
+    st.info("Linear model performs comparably or better.")
 
 # ---------------------------------------------------
-# RESIDUAL ANALYSIS
+# MAIN GRAPH (INTERACTIVE)
 # ---------------------------------------------------
-st.subheader("Residual Analysis")
+st.markdown("## 📈 Model Comparison")
 
-residuals_linear = areas - linear_pred
-residuals_poly = areas - poly_pred
+fig = go.Figure()
 
-fig2, ax2 = plt.subplots(figsize=(8,5))
-ax2.scatter(years, residuals_linear, label="Linear Residuals")
-ax2.scatter(years, residuals_poly, label="Polynomial Residuals")
-ax2.axhline(y=0, linestyle="--")
-ax2.set_xlabel("Year")
-ax2.set_ylabel("Residual (Observed - Predicted)")
-ax2.legend()
+fig.add_trace(go.Scatter(
+    x=years,
+    y=areas,
+    mode='markers',
+    name='Observed Data'
+))
 
-st.pyplot(fig2)
+fig.add_trace(go.Scatter(
+    x=future_years,
+    y=linear_model(future_years),
+    mode='lines',
+    name='Linear Model'
+))
 
-st.markdown("""
-**Interpretation:**
-- Residuals close to zero indicate good model fit.
-- Random distribution around zero suggests no systematic bias.
-- Patterns may indicate model misspecification.
-""")
+fig.add_trace(go.Scatter(
+    x=future_years,
+    y=poly_model(future_years),
+    mode='lines',
+    name=f'Polynomial (deg {degree})'
+))
+
+fig.add_vline(x=max(years), line_dash="dash")
+
+fig.update_layout(
+    template="plotly_dark",
+    xaxis_title="Year",
+    yaxis_title="Glacier Area (km²)",
+    legend_title="Models",
+    height=600
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# ---------------------------------------------------
+# RESIDUALS GRAPH
+# ---------------------------------------------------
+st.markdown("## 🔬 Residual Diagnostics")
+
+residual_fig = go.Figure()
+
+residual_fig.add_trace(go.Scatter(
+    x=years,
+    y=areas - linear_pred,
+    mode='markers',
+    name='Linear Residuals'
+))
+
+residual_fig.add_trace(go.Scatter(
+    x=years,
+    y=areas - poly_pred,
+    mode='markers',
+    name='Polynomial Residuals'
+))
+
+residual_fig.add_hline(y=0, line_dash="dash")
+
+residual_fig.update_layout(
+    template="plotly_dark",
+    xaxis_title="Year",
+    yaxis_title="Residual (Observed - Predicted)",
+    height=500
+)
+
+st.plotly_chart(residual_fig, use_container_width=True)
 
 # ---------------------------------------------------
 # PROJECTION SECTION
 # ---------------------------------------------------
-st.subheader("Projection Comparison")
+st.markdown("## 🔮 Projection Results")
 
-st.write(f"Projected Area in {projection_year}:")
-st.write(f"Linear Model: **{linear_model(projection_year):.2f} km²**")
-st.write(f"Polynomial Model: **{poly_model(projection_year):.2f} km²**")
+proj_col1, proj_col2 = st.columns(2)
+
+proj_col1.metric(
+    f"Linear Projection ({projection_year})",
+    f"{linear_model(projection_year):.2f} km²"
+)
+
+proj_col2.metric(
+    f"Polynomial Projection ({projection_year})",
+    f"{poly_model(projection_year):.2f} km²"
+)
 
 st.markdown("---")
 st.markdown("Developed by Andres Diaz | GIS & Spatial Data Analyst")
