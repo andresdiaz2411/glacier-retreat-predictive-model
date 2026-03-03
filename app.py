@@ -5,67 +5,81 @@ import plotly.graph_objects as go
 from sklearn.metrics import r2_score, mean_squared_error
 
 # ---------------------------------------------------
-# CONFIGURACIÓN
+# CONFIG
 # ---------------------------------------------------
 st.set_page_config(
-    page_title="Glacier Climate Modeling Dashboard",
+    page_title="Climate Risk Dashboard",
     layout="wide",
     page_icon="🌍"
 )
 
-st.title("🌍 Glacier Retreat Climate Modeling Dashboard")
-st.markdown("Advanced Comparative Statistical Analysis")
+st.title("🌍 Climate Risk Dashboard - Glacier Retreat Analysis")
 
 # ---------------------------------------------------
-# LOAD DATA
+# DATA
 # ---------------------------------------------------
 df = pd.read_csv("data/glacier_area.csv")
 years = df["year"].values
 areas = df["area_km2"].values
 
-# Sidebar
-st.sidebar.header("⚙️ Model Configuration")
+# Coordinates Nevado del Ruiz
+glacier_lat = 4.895
+glacier_lon = -75.322
+
+# ---------------------------------------------------
+# SIDEBAR
+# ---------------------------------------------------
+st.sidebar.header("⚙️ Scenario Settings")
+
 degree = st.sidebar.slider("Polynomial Degree", 2, 6, 4)
 projection_year = st.sidebar.slider("Projection Year", 2025, 2050, 2035)
+climate_factor = st.sidebar.slider(
+    "Climate Acceleration Factor (%)",
+    0, 50, 10
+)
 
 # ---------------------------------------------------
-# MODELS
+# MODEL
 # ---------------------------------------------------
-linear_model = np.poly1d(np.polyfit(years, areas, 1))
 poly_model = np.poly1d(np.polyfit(years, areas, degree))
 
-linear_pred = linear_model(years)
-poly_pred = poly_model(years)
-
-r2_linear = r2_score(areas, linear_pred)
-r2_poly = r2_score(areas, poly_pred)
-
-rmse_linear = np.sqrt(mean_squared_error(areas, linear_pred))
-rmse_poly = np.sqrt(mean_squared_error(areas, poly_pred))
-
 future_years = np.arange(min(years), projection_year + 1)
+baseline_projection = poly_model(future_years)
+
+# Apply climate acceleration
+adjusted_projection = baseline_projection * (1 - climate_factor / 100)
+
+r2_poly = r2_score(areas, poly_model(years))
+rmse_poly = np.sqrt(mean_squared_error(areas, poly_model(years)))
 
 # ---------------------------------------------------
-# METRICS SECTION
+# METRICS
 # ---------------------------------------------------
-st.markdown("## 📊 Model Performance Overview")
+st.markdown("## 📊 Model Performance")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
-col1.metric("Linear R²", f"{r2_linear:.4f}")
-col2.metric("Polynomial R²", f"{r2_poly:.4f}")
-col3.metric("Linear RMSE", f"{rmse_linear:.4f}")
-col4.metric("Polynomial RMSE", f"{rmse_poly:.4f}")
+col1.metric("R²", f"{r2_poly:.4f}")
+col2.metric("RMSE", f"{rmse_poly:.4f}")
+col3.metric(
+    f"Projected Area {projection_year}",
+    f"{adjusted_projection[-1]:.2f} km²"
+)
 
-if r2_poly > r2_linear:
-    st.success("Polynomial model provides superior explanatory power.")
+# Risk index
+risk_index = max(0, 100 - (adjusted_projection[-1] / max(areas)) * 100)
+
+if risk_index > 70:
+    st.error("🔴 High Climate Risk")
+elif risk_index > 40:
+    st.warning("🟠 Moderate Climate Risk")
 else:
-    st.info("Linear model performs comparably or better.")
+    st.success("🟢 Low Climate Risk")
 
 # ---------------------------------------------------
-# MAIN GRAPH (INTERACTIVE)
+# TEMPORAL GRAPH
 # ---------------------------------------------------
-st.markdown("## 📈 Model Comparison")
+st.markdown("## 📈 Temporal Projection")
 
 fig = go.Figure()
 
@@ -73,83 +87,54 @@ fig.add_trace(go.Scatter(
     x=years,
     y=areas,
     mode='markers',
-    name='Observed Data'
+    name='Observed'
 ))
 
 fig.add_trace(go.Scatter(
     x=future_years,
-    y=linear_model(future_years),
+    y=baseline_projection,
     mode='lines',
-    name='Linear Model'
+    name='Baseline Projection'
 ))
 
 fig.add_trace(go.Scatter(
     x=future_years,
-    y=poly_model(future_years),
+    y=adjusted_projection,
     mode='lines',
-    name=f'Polynomial (deg {degree})'
+    name='Climate Accelerated Scenario'
 ))
-
-fig.add_vline(x=max(years), line_dash="dash")
 
 fig.update_layout(
     template="plotly_dark",
     xaxis_title="Year",
     yaxis_title="Glacier Area (km²)",
-    legend_title="Models",
     height=600
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
 # ---------------------------------------------------
-# RESIDUALS GRAPH
+# MAP SECTION
 # ---------------------------------------------------
-st.markdown("## 🔬 Residual Diagnostics")
+st.markdown("## 🗺️ Geographic Context")
 
-residual_fig = go.Figure()
-
-residual_fig.add_trace(go.Scatter(
-    x=years,
-    y=areas - linear_pred,
+map_fig = go.Figure(go.Scattermapbox(
+    lat=[glacier_lat],
+    lon=[glacier_lon],
     mode='markers',
-    name='Linear Residuals'
+    marker=go.scattermapbox.Marker(size=14),
+    text=["Nevado del Ruiz Glacier"],
 ))
 
-residual_fig.add_trace(go.Scatter(
-    x=years,
-    y=areas - poly_pred,
-    mode='markers',
-    name='Polynomial Residuals'
-))
-
-residual_fig.add_hline(y=0, line_dash="dash")
-
-residual_fig.update_layout(
-    template="plotly_dark",
-    xaxis_title="Year",
-    yaxis_title="Residual (Observed - Predicted)",
-    height=500
+map_fig.update_layout(
+    mapbox_style="open-street-map",
+    mapbox_zoom=8,
+    mapbox_center={"lat": glacier_lat, "lon": glacier_lon},
+    height=500,
+    margin={"r":0,"t":0,"l":0,"b":0}
 )
 
-st.plotly_chart(residual_fig, use_container_width=True)
-
-# ---------------------------------------------------
-# PROJECTION SECTION
-# ---------------------------------------------------
-st.markdown("## 🔮 Projection Results")
-
-proj_col1, proj_col2 = st.columns(2)
-
-proj_col1.metric(
-    f"Linear Projection ({projection_year})",
-    f"{linear_model(projection_year):.2f} km²"
-)
-
-proj_col2.metric(
-    f"Polynomial Projection ({projection_year})",
-    f"{poly_model(projection_year):.2f} km²"
-)
+st.plotly_chart(map_fig, use_container_width=True)
 
 st.markdown("---")
 st.markdown("Developed by Andres Diaz | GIS & Spatial Data Analyst")
