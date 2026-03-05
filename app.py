@@ -1,8 +1,17 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+
 import streamlit as st
-import numpy as np
-import pandas as pd
-import plotly.graph_objects as go
-from sklearn.metrics import r2_score, mean_squared_error
+
+from data_loader import load_glacier_data
+from glacier_model import (
+    fit_polynomial,
+    generate_projections,
+    compute_metrics,
+    compute_risk_index,
+)
+from charts import build_projection_chart, build_residuals_chart, build_map_chart
 
 # ---------------------------------------------------
 # CONFIG
@@ -10,21 +19,20 @@ from sklearn.metrics import r2_score, mean_squared_error
 st.set_page_config(
     page_title="Climate Risk Dashboard",
     layout="wide",
-    page_icon="🌍"
+    page_icon="🌍",
 )
 
-st.title("🌍 Climate Risk Dashboard - Glacier Retreat Analysis")
+st.title("🌍 Climate Risk Dashboard — Glacier Retreat Analysis")
+st.caption("Nevado del Huila, Colombia | Landsat multitemporal analysis 2000–2022")
 
 # ---------------------------------------------------
 # DATA
 # ---------------------------------------------------
-df = pd.read_csv("data/glacier_area.csv")
-years = df["year"].values
-areas = df["area_km2"].values
-
-# Coordinates Nevado del Ruiz
-glacier_lat = 4.895
-glacier_lon = -75.322
+try:
+    years, areas = load_glacier_data("data/glacier_area.csv")
+except (FileNotFoundError, ValueError) as e:
+    st.error(f"⚠️ Data loading error: {e}")
+    st.stop()
 
 # ---------------------------------------------------
 # SIDEBAR
@@ -35,175 +43,86 @@ degree = st.sidebar.slider("Polynomial Degree", 2, 6, 4)
 projection_year = st.sidebar.slider("Projection Year", 2025, 2050, 2035)
 climate_factor = st.sidebar.slider(
     "Climate Acceleration Factor (%)",
-    0, 50, 10
+    0, 50, 10,
+    help="Sensitivity analysis only — not calibrated against IPCC projections.",
 )
 
 # ---------------------------------------------------
 # MODEL
 # ---------------------------------------------------
-poly_model = np.poly1d(np.polyfit(years, areas, degree))
+model = fit_polynomial(years, areas, degree)
+metrics = compute_metrics(years, areas, model)
 
-predicted = poly_model(years)
-
-future_years = np.arange(min(years), projection_year + 1)
-baseline_projection = poly_model(future_years)
-
-# Apply climate acceleration
-adjusted_projection = baseline_projection * (1 - climate_factor / 100)
-
-r2_poly = r2_score(areas, predicted)
-rmse_poly = np.sqrt(mean_squared_error(areas, predicted))
+future_years, baseline, adjusted = generate_projections(
+    model=model,
+    start_year=int(min(years)),
+    end_year=projection_year,
+    climate_factor=climate_factor,
+    use_richardson=True,
+    richardson_iterations=10,
+)
 
 # ---------------------------------------------------
 # METRICS
 # ---------------------------------------------------
 st.markdown("## 📊 Model Performance")
 
-col1, col2, col3 = st.columns(3)
-
-col1.metric("R²", f"{r2_poly:.4f}")
-col2.metric("RMSE", f"{rmse_poly:.4f}")
-col3.metric(
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("R²", f"{metrics['r2']:.4f}")
+col2.metric("RMSE", f"{metrics['rmse']:.4f} km²")
+col3.metric("95% Confidence Interval", f"±{metrics['ci_95']:.2f} km²")
+col4.metric(
     f"Projected Area {projection_year}",
-    f"{adjusted_projection[-1]:.2f} km²"
+    f"{adjusted[-1]:.2f} km²",
 )
 
 # Risk index
-risk_index = max(0, 100 - (adjusted_projection[-1] / max(areas)) * 100)
+risk_index = compute_risk_index(adjusted[-1], float(max(areas)))
 
 if risk_index > 70:
-    st.error("🔴 High Climate Risk")
+    st.error(f"🔴 High Climate Risk — Risk Index: {risk_index:.1f}/100")
 elif risk_index > 40:
-    st.warning("🟠 Moderate Climate Risk")
+    st.warning(f"🟠 Moderate Climate Risk — Risk Index: {risk_index:.1f}/100")
 else:
-    st.success("🟢 Low Climate Risk")
+    st.success(f"🟢 Low Climate Risk — Risk Index: {risk_index:.1f}/100")
 
 # ---------------------------------------------------
-# TEMPORAL GRAPH
+# TEMPORAL PROJECTION CHART
 # ---------------------------------------------------
 st.markdown("## 📈 Temporal Projection")
 
-fig = go.Figure()
-
-fig.add_trace(go.Scatter(
-    x=years,
-    y=areas,
-    mode='markers',
-    name='Observed'
-))
-
-fig.add_trace(go.Scatter(
-    x=future_years,
-    y=baseline_projection,
-    mode='lines',
-    name='Baseline Projection'
-))
-
-fig.add_trace(go.Scatter(
-    x=future_years,
-    y=adjusted_projection,
-    mode='lines',
-    name='Climate Accelerated Scenario'
-))
-
-fig.update_layout(
-    template="plotly_dark",
-    xaxis_title="Year",
-    yaxis_title="Glacier Area (km²)",
-    height=600
+st.plotly_chart(
+    build_projection_chart(years, areas, future_years, baseline, adjusted),
+    use_container_width=True,
 )
 
-st.plotly_chart(fig, use_container_width=True)
-
 # ---------------------------------------------------
-# RESIDUAL ANALYSIS (ANIMATED)
+# RESIDUAL ANALYSIS
 # ---------------------------------------------------
 st.markdown("## 🎞️ Animated Residual Diagnostics")
 
-residuals = areas - predicted
-
-# Crear dataframe para animación
-residual_df = pd.DataFrame({
-    "Year": years,
-    "Residual": residuals
-})
-
-# Crear figura animada
-animated_fig = go.Figure()
-
-for i in range(len(residual_df)):
-    animated_fig.add_trace(go.Scatter(
-        x=residual_df["Year"][:i+1],
-        y=residual_df["Residual"][:i+1],
-        mode='lines+markers',
-        name="Residual Evolution",
-        visible=(i == len(residual_df)-1)
-    ))
-
-# Crear frames para animación
-frames = []
-for i in range(len(residual_df)):
-    frame = go.Frame(
-        data=[go.Scatter(
-            x=residual_df["Year"][:i+1],
-            y=residual_df["Residual"][:i+1],
-            mode='lines+markers'
-        )],
-        name=str(residual_df["Year"][i])
-    )
-    frames.append(frame)
-
-animated_fig.frames = frames
-
-animated_fig.update_layout(
-    template="plotly_dark",
-    xaxis_title="Year",
-    yaxis_title="Residual (Observed - Predicted)",
-    height=500,
-    updatemenus=[{
-        "type": "buttons",
-        "buttons": [{
-            "label": "▶ Play",
-            "method": "animate",
-            "args": [None]
-        }]
-    }]
+st.plotly_chart(
+    build_residuals_chart(years, metrics["residuals"]),
+    use_container_width=True,
 )
-
-animated_fig.add_hline(y=0, line_dash="dash")
-
-st.plotly_chart(animated_fig, use_container_width=True)
 
 st.markdown("""
-**How to interpret this animation:**
-
-- Watch how residual magnitude changes over time.
-- Increasing dispersion may indicate growing model uncertainty.
-- Consistent bias above or below zero indicates systematic error.
+**How to interpret this chart:**
+- Residuals close to zero indicate a well-fitted model.
+- Increasing dispersion over time suggests growing uncertainty.
+- Consistent bias above or below zero indicates systematic model error.
 """)
+
 # ---------------------------------------------------
-# MAP SECTION
+# GEOGRAPHIC CONTEXT MAP
 # ---------------------------------------------------
-st.markdown("## 🗺️ Geographic Context")
+st.markdown("## 🗺️ Geographic Context — Nevado del Huila")
 
-map_fig = go.Figure(go.Scattermapbox(
-    lat=[glacier_lat],
-    lon=[glacier_lon],
-    mode='markers',
-    marker=go.scattermapbox.Marker(size=14),
-    text=["Nevado del Ruiz Glacier"],
-))
-
-map_fig.update_layout(
-    mapbox_style="open-street-map",
-    mapbox_zoom=8,
-    mapbox_center={"lat": glacier_lat, "lon": glacier_lon},
-    height=500,
-    margin={"r":0,"t":0,"l":0,"b":0}
-)
-
-st.plotly_chart(map_fig, use_container_width=True)
+st.plotly_chart(build_map_chart(), use_container_width=True)
 
 st.markdown("---")
-st.markdown("Developed by Andres Diaz | GIS & Spatial Data Analyst")
-
+st.markdown(
+    "Developed by **Andres Diaz** | GIS & Spatial Data Analyst | "
+    "[GitHub](https://github.com/andresdiaz2411/glacier-retreat-predictive-model) · "
+    "[LinkedIn](https://linkedin.com/in/adiaz96/)"
+)
