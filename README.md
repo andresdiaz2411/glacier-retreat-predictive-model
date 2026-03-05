@@ -1,82 +1,183 @@
-# Glacier Retreat Predictive Modeling
-### A Temporal Polynomial Regression Approach
+# 🏔️ Glacier Retreat Predictive Modeling — Nevado del Huila, Colombia
 
-## Abstract
-This study develops a temporal predictive model to estimate long-term glacier retreat using historical area measurements from 1999 to 2023. A fourth-degree polynomial regression was applied to model glacier area dynamics and project future behavior until 2035.
+> **Multitemporal GIS analysis of glacier retreat (2000–2022) using Landsat satellite imagery, spectral classification in ArcMap & QGIS, and polynomial projection via Richardson Extrapolation. Result: the Nevado del Huila glacier is projected to disappear by 2030.**
 
----
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://python.org)
+[![ArcMap](https://img.shields.io/badge/ArcMap-10.x-green?logo=esri)](https://www.esri.com)
+[![QGIS](https://img.shields.io/badge/QGIS-3.x-brightgreen?logo=qgis)](https://qgis.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-App-red?logo=streamlit)](https://andresdiaz-glacier-model.streamlit.app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## 1. Introduction
-
-Glacier retreat is one of the most visible indicators of climate change. The objective of this project is to analyze historical glacier area measurements and construct a predictive model capable of estimating future reduction trends.
-
----
-
-## 2. Data
-
-The dataset includes publicly available glacier area measurements (km²) for selected years between 1999 and 2023.
-
-Structure:
-- year
-- area_km2
+🌐 **[Live Dashboard →](https://andresdiaz-glacier-model.streamlit.app/)**
 
 ---
 
-## 3. Methodology
+## 📌 Abstract
 
-A polynomial regression model (degree 4) was fitted using NumPy.
+This study analyzes glacier retreat in the **Volcán Nevado del Huila (VNH)** — the highest point of Colombia's Central Andes — between 2000 and 2022, using 11 Landsat satellite images processed in ArcMap and QGIS. Glacier boundaries were delineated through spectral band ratio classification (B3/B5) following the IDEAM official methodology. Historical areas were validated against IDEAM institutional records. A fifth-degree polynomial model (R² = 0.9612) was fitted and refined through Richardson Extrapolation (10 iterations) to project glacier behavior through 2030.
 
-The model performance was evaluated using the coefficient of determination (R²), calculated as:
-
-R² = 1 − (SS_res / SS_tot)
-
-Where:
-- SS_res: residual sum of squares
-- SS_tot: total sum of squares
+**Key finding: if current conditions persist, the Nevado del Huila glacier will disappear entirely by 2030** — a loss of over 54% of its 1989 area.
 
 ---
 
-## 4. Results
+## 🗺️ Study Area
 
-The fitted model achieved a high R² value, indicating strong explanatory capacity over historical data.
+| Parameter | Value |
+|---|---|
+| Glacier | Volcán Nevado del Huila (VNH) |
+| Location | Cauca, Huila & Tolima, Colombia |
+| Coordinates | 2°55' N, 76°03' W |
+| Max elevation | 5,364 m.a.s.l. |
+| 1989 area | 14.72 km² |
+| 2022 area | 7.46 km² |
+| Total loss | −7.26 km² (−49.32%) |
+| Study period | 2000–2022 (11 Landsat scenes) |
 
-Projection analysis suggests a continued decreasing trend in glacier area through 2035.
-
-Generated outputs include:
-
-- Historical data visualization
-- Polynomial regression fit with R²
-- Long-term projection
-
-See the `outputs/` folder for visual results.
-
----
-
-## 5. Discussion
-
-While polynomial regression captures non-linear temporal patterns, long-term projections should be interpreted cautiously. External climate variables were not incorporated in this simplified model.
-
-Future improvements may include:
-- Incorporation of temperature and precipitation data
-- Comparison with exponential decay models
-- Uncertainty estimation
+The VNH is the largest glacier-covered volcano in Colombia, part of the upper watersheds of the Magdalena and Cauca rivers — two of the country's most critical water sources.
 
 ---
 
-## 6. Tools Used
+## 🛰️ Methodology
 
-- Python
-- NumPy
-- Pandas
-- Matplotlib
-- Scikit-learn
+The workflow was structured in four phases:
+
+### Phase 1 — Satellite Image Selection
+- Source: **USGS Earth Explorer** (Landsat Collection 2, Level 2 Science Products — L2SP)
+- Images with cloud cover **< 30%** over the glacier zone
+- Landsat 7 scan line corrector (SLC-off) gaps filled using QGIS interpolation
+- Final dataset: **11 usable scenes** from 2000–2022 (years 2003, 2004, 2006 and others discarded)
+
+### Phase 2 — Digital Image Processing (ArcMap + QGIS)
+- Study area clipped using a shapefile with bounding coordinates (2°53'–2°58' N, 76°00'–76°03' W)
+- **Band Ratio Classification**: `Band_Ratio = Float(Band 3) / Float(Band 5)` — following the [IDEAM glacier mapping guide (2022)](http://www.ideam.gov.co/web/ecosistemas/glaciares)
+- Threshold identification using ArcMap's `Identify` tool and `Raster Calculator`
+- Raster-to-polygon conversion, followed by **manual polygon refinement** to remove water bodies, cloud shadows, and volcanic ash artifacts
+- Coordinate system: **MAGNA Colombia Bogotá**
+
+### Phase 3 — Glacier Retreat Calculation
+- Glacier area (km²) calculated per year using `Calculate Geometry` in ArcMap
+- Annual rate of change calculated as:
+
+```
+r = [(N / N₀)^(1/t) − 1] × 100
+```
+
+- Dataset supplemented with IDEAM institutional records for 2010, 2016, 2017, and 2019 to bridge the 2012–2020 data gap
+
+### Phase 4 — Projection via Polynomial Regression + Richardson Extrapolation
+- Missing years (2003–2022) filled via polynomial interpolation
+- Fifth-degree polynomial fitted to the complete series (R² = 0.9612)
+- **Richardson Extrapolation** applied (step size h=1 year, 10 iterations) to refine projection accuracy
+- Projections generated for 2023–2030
 
 ---
 
-## Author
+## 📊 Key Results
 
-Andres Diaz  
-GIS & Spatial Data Analyst  
-Specialized in Spatial Modeling & Geospatial Data Quality  
+| Year | Area (km²) | Cumulative Loss |
+|---|---|---|
+| 1989 | 14.72 | — (baseline) |
+| 2000 | 12.75 | −13.38% |
+| 2011 | 8.22 | −44.16% |
+| 2020 | 6.67 | −54.69% |
+| 2022 | 7.46 | −49.32% |
+| **2025 (projected)** | **6.57** | — |
+| **2027 (projected)** | **4.67** | — |
+| **2030 (projected)** | **0.00** | **−100%** |
 
-Open to remote opportunities.
+**Model metrics:**
+
+| Metric | Value |
+|---|---|
+| R² | 0.9612 |
+| MSE | 0.1431 km² |
+| Residual Std Dev | 0.3783 km² |
+| Confidence Interval (95%) | ±0.74 km² |
+| Mean annual retreat (2000–2022) | −2.28% / −0.427 km²/year |
+| Mean projected retreat (2023–2030) | −0.93 km²/year |
+
+---
+
+## 🖥️ Interactive Dashboard
+
+The Streamlit dashboard allows users to explore the model interactively:
+
+- **Adjust polynomial degree** (2–6) and observe fit changes
+- **Select projection year** (2025–2050)
+- **Apply climate acceleration scenarios** (sensitivity analysis)
+- **Animated residual diagnostics** — see how model error evolves over time
+- **Climate risk index** — real-time risk classification based on projected area
+- **Geographic context map** of the Nevado del Huila location
+
+🔗 **[Open Dashboard](https://andresdiaz-glacier-model.streamlit.app/)**
+
+---
+
+## 🗂️ Repository Structure
+
+```
+glacier-retreat-predictive-model/
+│
+├── app.py                  # Streamlit dashboard (interactive model)
+├── requirements.txt        # Python dependencies
+│
+├── data/
+│   └── glacier_area.csv    # Historical glacier areas (km²), 1999–2022
+│                           # Sources: Landsat imagery + IDEAM institutional records
+│
+├── outputs/                # Generated charts and projections
+│
+├── src/                    # Supporting scripts
+│
+└── .streamlit/             # Streamlit configuration
+```
+
+---
+
+## 🔧 Tech Stack
+
+| Category | Tools |
+|---|---|
+| GIS Processing | ArcMap 10.8., QGIS 3.28.10 |
+| Satellite Data | Landsat 5 TM, Landsat 7 ETM+, Landsat 8 OLI (USGS Earth Explorer) |
+| Reference Data | IDEAM Glacier Monitoring Program |
+| Spectral Method | Band Ratio (B3/B5), NDSI |
+| Python Libraries | NumPy, SciPy, Scikit-learn, Pandas, Matplotlib, Plotly, Streamlit |
+| Modeling | Polynomial Regression (degree 5), Richardson Extrapolation |
+| Deployment | Streamlit Cloud |
+
+---
+
+## ⚡ Run Locally
+
+```bash
+git clone https://github.com/andresdiaz2411/glacier-retreat-predictive-model.git
+cd glacier-retreat-predictive-model
+pip install -r requirements.txt
+streamlit run app.py
+```
+
+---
+
+## 📖 References
+
+- IDEAM (2022). *Guía para el cálculo del área glaciar mediante el uso de productos de sensoramiento remoto.*
+- IDEAM (2021). *Glaciares Colombia.* http://www.ideam.gov.co/web/ecosistemas/glaciares
+- USGS (2023). *Landsat Collection 2 Level 2 Science Product Guide.*
+- Paul et al. (2015). *The glaciers climate change initiative: Methods for creating glacier area products.* Remote Sensing of Environment, 162, 408–426.
+- Richardson, L.F. (1911). *The approximate arithmetical solution by finite differences.* Philosophical Transactions of the Royal Society.
+- Rabatel et al. (2013). *Changes in glacier equilibrium-line altitude in the western Alps.* The Cryosphere, 7, 1455–1471.
+
+---
+
+## 👤 Author
+
+**German Andrés Diaz Gelves**
+GIS & Spatial Data Analyst | Remote Sensing | Spatial Modeling
+
+Specialist in Geographic Information Systems — Universidad de Manizales (2024)
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://linkedin.com/in/YOUR-PROFILE)
+[![Email](https://img.shields.io/badge/Email-Contact-red?logo=gmail)](mailto:YOUR-EMAIL)
+
+*Open to remote opportunities in GIS analysis, environmental monitoring, and geospatial data science.*
