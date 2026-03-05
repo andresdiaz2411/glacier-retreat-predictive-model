@@ -177,7 +177,7 @@ GIS & Spatial Data Analyst | Remote Sensing | Spatial Modeling
 
 Specialist in Geographic Information Systems — Universidad de Manizales (2024)
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)](https://linkedin.com/in/YOUR-PROFILE)
-[![Email](https://img.shields.io/badge/Email-Contact-red?logo=gmail)](mailto:YOUR-EMAIL)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?logo=linkedin)]((https://www.linkedin.com/in/adiaz96/))
+[![Email](https://img.shields.io/badge/Email-Contact-red?logo=gmail)](mailto:andresdgel96@gmail.com)
 
 *Open to remote opportunities in GIS analysis, environmental monitoring, and geospatial data science.*
