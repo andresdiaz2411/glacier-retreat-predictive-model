@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xml:lang="es"><Esri><CreaDate>20230827</CreaDate><CreaTime>12315700</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce><DataProperties><lineage><Process ToolSource="c:\program files (x86)\arcgis\desktop10.8\ArcToolbox\Toolboxes\Conversion Tools.tbx\RasterToPolygon" Date="20230827" Time="123157">RasterToPolygon 2015_reclass "C:\Users\Andres Diaz\Desktop\TRABAJO_DE_GRADO\IMAGENES\CORREGIDAS\NDSI\2015\2015_polygon.shp" SIMPLIFY VALUE SINGLE_OUTER_PART #</Process></lineage></DataProperties></Esri></metadata>
