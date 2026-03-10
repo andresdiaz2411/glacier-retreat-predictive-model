@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
+sys.path.append(os.path.dirname(__file__))
 
 import streamlit as st
 
@@ -112,6 +113,17 @@ st.markdown("""
 - Increasing dispersion over time suggests growing uncertainty.
 - Consistent bias above or below zero indicates systematic model error.
 """)
+
+# ---------------------------------------------------
+# TEMPORAL GLACIER MAP
+# ---------------------------------------------------
+st.markdown("## 🗾 Glacier Retreat — Spatial Timeline")
+
+st.write("DEBUG: attempting to load glacier_map")
+from glacier_map import render_glacier_map
+st.write("DEBUG: glacier_map loaded")
+render_glacier_map()
+st.write("DEBUG: render complete")
 
 # ---------------------------------------------------
 # GEOGRAPHIC CONTEXT MAP

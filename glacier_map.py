@@ -74,13 +74,13 @@ def load_all_glaciers(data_dir: str) -> dict[int, gpd.GeoDataFrame]:
 
 
 @st.cache_data
-def build_area_table(glaciers: dict) -> pd.DataFrame:
+def build_area_table(_glaciers: dict) -> pd.DataFrame:
     """
     Build area summary table from loaded GDFs.
     Area computed from EPSG:3116 (metric) then converted to km².
     """
     rows = []
-    for year, gdf in sorted(glaciers.items()):
+    for year, gdf in sorted(_glaciers.items()):
         # Reproject to metric CRS to get accurate area
         gdf_metric = gdf.to_crs("EPSG:3116")
         area_m2    = gdf_metric.geometry.area.sum()
@@ -182,7 +182,7 @@ def build_glacier_map(
         mapbox=dict(
             style="carto-darkmatter",
             center=dict(lat=center_lat, lon=center_lon),
-            zoom=11,
+            zoom=12.3,
         ),
         height=520,
         margin=dict(t=0, b=0, l=0, r=0),
