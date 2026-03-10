@@ -413,40 +413,27 @@ def render_glacier_map():
         fig_trend = build_trend_chart(area_df, selected_year)
         st.plotly_chart(fig_trend, use_container_width=True)
 
-    # Mini table
-    st.markdown(
-        "<div style='font-family:IBM Plex Mono; font-size:0.7rem; color:#64748b;"
-        "text-transform:uppercase; letter-spacing:1px; margin:1rem 0 0.3rem 0;'>"
-        "All Years</div>",
-        unsafe_allow_html=True,
-    )
-    display_df = area_df[["year", "area_km2", "pct_vs_base"]].copy()
-    display_df.columns = ["Year", "Area km²", "Δ vs 1989"]
-    display_df["Area km²"] = display_df["Area km²"].apply(lambda x: round(x, 2))
-    display_df["Δ vs 1989"] = display_df["Δ vs 1989"].apply(
-        lambda x: f"{x:+.1f}%" if pd.notna(x) else "—"
-    )
-    
-    rows_html = ""
-    for _, r in display_df.iterrows():
-        rows_html += f"""
-        <tr style="border-bottom:1px solid #1e2433;">
-          <td style="text-align:center;padding:4px 8px;">{int(r['Year'])}</td>
-          <td style="text-align:center;padding:4px 8px;">{r['Area km²']:.2f}</td>
-          <td style="text-align:center;padding:4px 8px;">{r['Δ vs 1989']}</td>
-        </tr>"""
-    
-    st.markdown(f"""
-    <div style="height:300px;overflow-y:auto;">
-    <table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#e2e8f0;">
-      <thead>
-        <tr style="border-bottom:1px solid #334155;color:#64748b;">
-          <th style="text-align:center;padding:4px 8px;">Year</th>
-          <th style="text-align:center;padding:4px 8px;">Area km²</th>
-          <th style="text-align:center;padding:4px 8px;">Δ vs 1989</th>
-        </tr>
-      </thead>
-      <tbody>{rows_html}</tbody>
-    </table>
-    </div>
-    """, unsafe_allow_html=True)
+  # Mini table
+        st.markdown(
+            "<div style='font-family:IBM Plex Mono; font-size:0.7rem; color:#64748b;"
+            "text-transform:uppercase; letter-spacing:1px; margin:1rem 0 0.3rem 0;'>"
+            "All Years</div>",
+            unsafe_allow_html=True,
+        )
+        display_df = area_df[["year", "area_km2", "pct_vs_base"]].copy()
+        display_df.columns = ["Year", "Area km²", "Δ vs 1989"]
+        display_df["Area km²"] = display_df["Area km²"].apply(lambda x: round(x, 2))
+        display_df["Δ vs 1989"] = display_df["Δ vs 1989"].apply(
+            lambda x: f"{x:+.1f}%" if pd.notna(x) else "—"
+        )
+        st.dataframe(
+            display_df,
+            use_container_width=True,
+            height=300,
+            hide_index=True,
+            column_config={
+                "Year":     st.column_config.NumberColumn("Year",     format="%d"),
+                "Area km²": st.column_config.NumberColumn("Area km²", format="%.2f"),
+                "Δ vs 1989":st.column_config.TextColumn("Δ vs 1989"),
+            }
+        )
