@@ -340,8 +340,9 @@ def build_trend_chart(area_df: pd.DataFrame, selected_year: int) -> go.Figure:
             gridcolor="#1e2433",
             tickmode="array",
             tickvals=area_df["year"].tolist(),
-            tickangle=-45,
-        ),
+            ticktext=[str(y)[2:] for y in area_df["year"].tolist()],
+            tickangle=-90,
+            tickfont=dict(size=9),
         yaxis=dict(
             gridcolor="#1e2433",
             title="km²",
