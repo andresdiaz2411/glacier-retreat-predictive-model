@@ -23,6 +23,16 @@ st.set_page_config(
     page_icon="🌍",
 )
 
+st.markdown("""
+<style>
+[data-testid="stSidebar"] {
+    min-width: 180px !important;
+    max-width: 180px !important;
+    width: 180px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("🌍 Climate Risk Dashboard — Glacier Retreat Analysis")
 st.caption("Nevado del Huila, Colombia | Landsat multitemporal analysis 2000–2022")
 
@@ -137,4 +147,5 @@ st.markdown(
     "Developed by **Andres Diaz** | GIS & Spatial Data Analyst | "
     "[GitHub](https://github.com/andresdiaz2411/glacier-retreat-predictive-model) · "
     "[LinkedIn](https://linkedin.com/in/adiaz96/)"
+
 )
