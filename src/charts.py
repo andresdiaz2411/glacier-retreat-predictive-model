@@ -10,8 +10,8 @@ import pandas as pd
 import plotly.graph_objects as go
 
 # Glacier coordinates — Nevado del Huila, Colombia
-GLACIER_LAT = 2.9167
-GLACIER_LON = -76.05
+GLACIER_LAT = 2.9333
+GLACIER_LON = -76.0333
 
 
 # ---------------------------------------------------------------------------
