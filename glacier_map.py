@@ -397,7 +397,7 @@ def render_glacier_map():
     render_stats(area_df, selected_year)
 
     # Map + trend chart side by side
-    col_map, col_chart = st.columns([3, 1])
+    col_map, col_chart = st.columns([1.8, 1])
 
     with col_map:
         fig_map = build_glacier_map(glaciers, selected_year, years)
