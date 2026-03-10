@@ -422,6 +422,7 @@ def render_glacier_map():
         )
         display_df = area_df[["year", "area_km2", "pct_vs_base"]].copy()
         display_df.columns = ["Year", "Area km²", "Δ vs 1989"]
+        display_df["Area km²"] = display_df["Area km²"].apply(lambda x: round(x, 2))
         display_df["Δ vs 1989"] = display_df["Δ vs 1989"].apply(
             lambda x: f"{x:+.1f}%" if pd.notna(x) else "—"
         )
@@ -430,4 +431,9 @@ def render_glacier_map():
             use_container_width=True,
             height=300,
             hide_index=True,
+            column_config={
+                "Year":     st.column_config.NumberColumn("Year",     format="%d"),
+                "Area km²": st.column_config.NumberColumn("Area km²", format="%.2f"),
+                "Δ vs 1989":st.column_config.TextColumn("Δ vs 1989"),
+            }
         )
