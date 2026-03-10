@@ -159,13 +159,9 @@ def build_residuals_chart(years: np.ndarray, residuals: np.ndarray) -> go.Figure
 # ---------------------------------------------------------------------------
 
 def build_map_chart() -> go.Figure:
-    """
-    Build a geographic context map showing the Nevado del Huila
-    location with influence area on satellite imagery.
-    """
     import math
 
-    # Generate influence area circle (8 km radius)
+    # Glacier center
     radius_km = 8
     circle_lats, circle_lons = [], []
     for i in range(361):
@@ -175,9 +171,25 @@ def build_map_chart() -> go.Figure:
         circle_lats.append(GLACIER_LAT + dlat)
         circle_lons.append(GLACIER_LON + dlon)
 
+    # PNN Nevado del Huila approximate boundary (simplified polygon)
+    pnn_lats = [3.15, 3.15, 2.65, 2.65, 3.15]
+    pnn_lons = [-76.25, -75.85, -75.85, -76.25, -76.25]
+
     fig = go.Figure()
 
-    # Influence area fill
+    # PNN boundary
+    fig.add_trace(go.Scattermapbox(
+        lat=pnn_lats,
+        lon=pnn_lons,
+        mode="lines",
+        fill="toself",
+        fillcolor="rgba(34, 197, 94, 0.07)",
+        line=dict(color="rgba(34, 197, 94, 0.5)", width=1.5, ),
+        name="PNN Nevado del Huila",
+        hoverinfo="skip",
+    ))
+
+    # Influence area
     fig.add_trace(go.Scattermapbox(
         lat=circle_lats,
         lon=circle_lons,
@@ -194,15 +206,12 @@ def build_map_chart() -> go.Figure:
         lat=[GLACIER_LAT],
         lon=[GLACIER_LON],
         mode="markers+text",
-        marker=go.scattermapbox.Marker(
-            size=14,
-            color="#00B4D8",
-        ),
-        text=["Nevado del Huila"],
+        marker=go.scattermapbox.Marker(size=14, color="#00B4D8"),
+        text=["Nevado del Huila · 5,364 m s.n.m."],
         textposition="top right",
-        textfont=dict(color="#ffffff", size=13),
+        textfont=dict(color="#ffffff", size=12),
         name="Nevado del Huila",
-        hovertemplate="<b>Nevado del Huila</b><br>Lat: 2.9167°N<br>Lon: 76.05°W<br>Elev: ~5,364 m<extra></extra>",
+        hovertemplate="<b>Nevado del Huila</b><br>Lat: 2.9167°N · Lon: 76.05°W<br>Elevación: 5,364 m s.n.m.<br>PNN — Huila, Cauca, Tolima<extra></extra>",
     ))
 
     fig.update_layout(
@@ -218,7 +227,7 @@ def build_map_chart() -> go.Figure:
             zoom=10,
             center={"lat": GLACIER_LAT, "lon": GLACIER_LON},
         ),
-        height=500,
+        height=620,
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         paper_bgcolor="#151820",
         legend=dict(
