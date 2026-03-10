@@ -184,7 +184,7 @@ def build_map_chart() -> go.Figure:
         mode="lines",
         fill="toself",
         fillcolor="rgba(34, 197, 94, 0.07)",
-        line=dict(color="rgba(34, 197, 94, 0.5)", width=1.5, ),
+        line=dict(color="rgba(34, 197, 94, 0.5)", width=1.2, ),
         name="PNN Nevado del Huila",
         hoverinfo="skip",
     ))
