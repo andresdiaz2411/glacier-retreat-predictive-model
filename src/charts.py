@@ -160,27 +160,74 @@ def build_residuals_chart(years: np.ndarray, residuals: np.ndarray) -> go.Figure
 
 def build_map_chart() -> go.Figure:
     """
-    Build a geographic context map showing the Nevado del Huila location.
-
-    Returns
-    -------
-    go.Figure
+    Build a geographic context map showing the Nevado del Huila
+    location with influence area on satellite imagery.
     """
-    fig = go.Figure(go.Scattermapbox(
+    import math
+
+    # Generate influence area circle (8 km radius)
+    radius_km = 8
+    circle_lats, circle_lons = [], []
+    for i in range(361):
+        angle = math.radians(i)
+        dlat = (radius_km / 111.32) * math.cos(angle)
+        dlon = (radius_km / (111.32 * math.cos(math.radians(GLACIER_LAT)))) * math.sin(angle)
+        circle_lats.append(GLACIER_LAT + dlat)
+        circle_lons.append(GLACIER_LON + dlon)
+
+    fig = go.Figure()
+
+    # Influence area fill
+    fig.add_trace(go.Scattermapbox(
+        lat=circle_lats,
+        lon=circle_lons,
+        mode="lines",
+        fill="toself",
+        fillcolor="rgba(0, 180, 216, 0.15)",
+        line=dict(color="rgba(0, 180, 216, 0.6)", width=1.5),
+        name="Influence Area (~8 km)",
+        hoverinfo="skip",
+    ))
+
+    # Glacier marker
+    fig.add_trace(go.Scattermapbox(
         lat=[GLACIER_LAT],
         lon=[GLACIER_LON],
         mode="markers+text",
-        marker=go.scattermapbox.Marker(size=14, color="#00B4D8"),
-        text=["Nevado del Huila Glacier"],
+        marker=go.scattermapbox.Marker(
+            size=14,
+            color="#00B4D8",
+        ),
+        text=["Nevado del Huila"],
         textposition="top right",
+        textfont=dict(color="#ffffff", size=13),
+        name="Nevado del Huila",
+        hovertemplate="<b>Nevado del Huila</b><br>Lat: 2.9167°N<br>Lon: 76.05°W<br>Elev: ~5,364 m<extra></extra>",
     ))
 
     fig.update_layout(
-        mapbox_style="open-street-map",
-        mapbox_zoom=8,
-        mapbox_center={"lat": GLACIER_LAT, "lon": GLACIER_LON},
+        mapbox=dict(
+            style="white-bg",
+            layers=[{
+                "below": "traces",
+                "sourcetype": "raster",
+                "source": [
+                    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                ],
+            }],
+            zoom=10,
+            center={"lat": GLACIER_LAT, "lon": GLACIER_LON},
+        ),
         height=500,
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
+        paper_bgcolor="#151820",
+        legend=dict(
+            bgcolor="rgba(21,24,32,0.85)",
+            bordercolor="#1e2433",
+            borderwidth=1,
+            font=dict(color="#e2e8f0", size=11, family="IBM Plex Mono"),
+            x=0.01, y=0.99,
+        ),
     )
 
     return fig
