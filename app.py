@@ -129,11 +129,8 @@ st.markdown("""
 # ---------------------------------------------------
 st.markdown("## 🗾 Glacier Retreat — Spatial Timeline")
 
-st.write("DEBUG: attempting to load glacier_map")
 from glacier_map import render_glacier_map
-st.write("DEBUG: glacier_map loaded")
 render_glacier_map()
-st.write("DEBUG: render complete")
 
 # ---------------------------------------------------
 # GEOGRAPHIC CONTEXT MAP
@@ -149,3 +146,4 @@ st.markdown(
     "[LinkedIn](https://linkedin.com/in/adiaz96/)"
 
 )
+
