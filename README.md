@@ -3,8 +3,8 @@
 > **Multitemporal GIS analysis of glacier retreat (1989–2023) using Landsat satellite imagery, NDSI spectral classification in ArcMap & QGIS, and polynomial projection. Result: the Nevado del Huila glacier is projected to disappear by 2030.**
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://python.org)
-[![ArcMap](https://img.shields.io/badge/ArcMap-10.x-green?logo=esri)](https://www.esri.com)
-[![QGIS](https://img.shields.io/badge/QGIS-3.x-brightgreen?logo=qgis)](https://qgis.org)
+[![ArcMap](https://img.shields.io/badge/ArcMap-10.8-green?logo=esri)](https://www.esri.com)
+[![QGIS](https://img.shields.io/badge/QGIS-3.28.10-brightgreen?logo=qgis)](https://qgis.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-App-red?logo=streamlit)](https://andresdiaz-glacier-model.streamlit.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
