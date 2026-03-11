@@ -134,7 +134,7 @@ glacier-retreat-predictive-model/
 
 | Category | Tools |
 |---|---|
-| GIS Processing | ArcMap 10.x, QGIS 3.x |
+| GIS Processing | ArcMap 10.8, QGIS 3.28.10 |
 | Satellite Data | Landsat 5/7/8/9 (USGS Earth Explorer) |
 | Reference Data | IDEAM Glacier Monitoring Program |
 | Spectral Method | NDSI (Normalized Difference Snow Index) |
